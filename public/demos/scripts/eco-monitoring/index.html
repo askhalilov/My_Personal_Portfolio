@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ЭкоМониторинг — Отчеты и аналитика</title>
+
+  <!-- Font (optional) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" class="ico ico--leaf">
+            <path d="M20.5 3.5c-7.2 1-12.5 6.2-13.8 13.4-.2 1.3-.2 2.2-.2 2.2s.9 0 2.2-.2c7.2-1.2 12.5-6.6 13.4-13.8.2-1.4 0-1.6-.2-1.8-.2-.2-.4-.4-1.4-.2Z"/>
+            <path d="M7 17c2.2-3.1 6.2-6.2 10-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand__text">
+          <div class="brand__title">ЭкоМониторинг</div>
+          <div class="brand__subtitle">Система контроля качества окружающей среды</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav__item" href="#" aria-label="Панель мониторинга">
+          <span class="nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M4 13.5V20h16v-6.5M4 10l8-6 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="nav__label">Панель мониторинга</span>
+        </a>
+
+        <a class="nav__item" href="#" aria-label="Датчики">
+          <span class="nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M12 3v10m0 0a4 4 0 1 0 4 4m-4-4a4 4 0 1 1-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav__label">Датчики</span>
+        </a>
+
+        <a class="nav__item" href="#" aria-label="Оборудование">
+          <span class="nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M7 21h10M8 17h8M9 3h6l2 4v8a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4V7l2-4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="nav__label">Оборудование</span>
+        </a>
+
+        <a class="nav__item nav__item--active" href="#" aria-current="page" aria-label="Отчеты">
+          <span class="nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h6M9 15h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav__label">Отчеты</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar__spacer"></div>
+        <div class="topbar__right">
+          <div class="chip chip--ghost">
+            <span class="chip__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="ico">
+                <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+            </span>
+            <span class="chip__label">Текущее время</span>
+            <span class="chip__value" id="clock">--:--:--</span>
+          </div>
+
+          <button class="chip chip--warning" id="warningsBtn" type="button" title="Предупреждения">
+            <span class="chip__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="ico">
+                <path d="M12 9v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M12 17h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M10.3 4.2 2.7 18a2 2 0 0 0 1.8 3h15a2 2 0 0 0 1.8-3L13.7 4.2a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="chip__value">2 предупреждения</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="page-head">
+          <div>
+            <h1>Отчеты и аналитика</h1>
+            <p class="muted">Формирование и экспорт отчетов по экологическому мониторингу</p>
+          </div>
+        </div>
+
+        <section class="stats">
+          <article class="stat">
+            <div class="stat__icon">
+              <svg viewBox="0 0 24 24" class="ico">
+                <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="stat__meta">
+              <div class="stat__label">Всего отчетов</div>
+              <div class="stat__value">6</div>
+            </div>
+          </article>
+
+          <article class="stat">
+            <div class="stat__icon stat__icon--ok">
+              <svg viewBox="0 0 24 24" class="ico">
+                <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="stat__meta">
+              <div class="stat__label">Готовы к экспорту</div>
+              <div class="stat__value">5</div>
+            </div>
+          </article>
+
+          <article class="stat">
+            <div class="stat__icon stat__icon--warn">
+              <svg viewBox="0 0 24 24" class="ico">
+                <path d="M12 9v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M12 17h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                <path d="M10.3 4.2 2.7 18a2 2 0 0 0 1.8 3h15a2 2 0 0 0 1.8-3L13.7 4.2a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="stat__meta">
+              <div class="stat__label">Требуют внимания</div>
+              <div class="stat__value">1</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="grid">
+          <section class="card card--reports">
+            <div class="card__head">
+              <h2>Сформированные отчеты</h2>
+              <button class="btn btn--primary" id="createReportBtn" type="button">
+                <span class="btn__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" class="ico">
+                    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                Создать отчет
+              </button>
+            </div>
+
+            <div class="reports">
+              <div class="report">
+                <div class="report__left">
+                  <div class="file">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Отчет по выбросам за январь, 2026</div>
+                    <div class="report__sub">
+                      <span class="dot">31.01.2026</span>
+                      <span class="dot">Ежемесячный</span>
+                      <span>2.4 МБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--ok">Готов</span>
+                  <button class="icon-btn" type="button" data-download="Отчет по выбросам за январь, 2026" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="report">
+                <div class="report__left">
+                  <div class="file">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Отчет по качеству воздуха</div>
+                    <div class="report__sub">
+                      <span class="dot">10.02.2026</span>
+                      <span class="dot">Еженедельный</span>
+                      <span>1.8 МБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--ok">Готов</span>
+                  <button class="icon-btn" type="button" data-download="Отчет по качеству воздуха" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="report">
+                <div class="report__left">
+                  <div class="file">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Отчет об оборудовании</div>
+                    <div class="report__sub">
+                      <span class="dot">31.12.2025</span>
+                      <span class="dot">Квартальный</span>
+                      <span>5.2 МБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--ok">Готов</span>
+                  <button class="icon-btn" type="button" data-download="Отчет об оборудовании" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="report">
+                <div class="report__left">
+                  <div class="file">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Отчет по калибровке датчиков</div>
+                    <div class="report__sub">
+                      <span class="dot">31.01.2026</span>
+                      <span class="dot">Ежемесячный</span>
+                      <span>1.2 МБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--ok">Готов</span>
+                  <button class="icon-btn" type="button" data-download="Отчет по калибровке датчиков" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="report report--attention">
+                <div class="report__left">
+                  <div class="file file--warn">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 9v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M12 17h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                      <path d="M10.3 4.2 2.7 18a2 2 0 0 0 1.8 3h15a2 2 0 0 0 1.8-3L13.7 4.2a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Отчет о превышениях ПДК</div>
+                    <div class="report__sub">
+                      <span class="dot">12.02.2026</span>
+                      <span class="dot">Внеплановый</span>
+                      <span>856 КБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--warn">Требует внимания</span>
+                  <button class="icon-btn" type="button" data-download="Отчет о превышениях ПДК" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="report">
+                <div class="report__left">
+                  <div class="file">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M7 3h7l3 3v15H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M14 3v3h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="report__meta">
+                    <div class="report__title">Годовой экологический отчет 2025</div>
+                    <div class="report__sub">
+                      <span class="dot">15.01.2026</span>
+                      <span class="dot">Годовой</span>
+                      <span>12.8 МБ</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="report__right">
+                  <span class="badge badge--ok">Готов</span>
+                  <button class="icon-btn" type="button" data-download="Годовой экологический отчет 2025" title="Скачать">
+                    <svg viewBox="0 0 24 24" class="ico">
+                      <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                      <path d="M8 11l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M5 21h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="side">
+            <section class="card">
+              <div class="card__head card__head--no-actions">
+                <h3>Быстрое создание</h3>
+              </div>
+              <div class="quick">
+                <button class="quick__item" type="button" data-quick="Ежедневный отчет">
+                  <div class="quick__title">Ежедневный отчет</div>
+                  <div class="quick__sub">Выбросы за текущие сутки</div>
+                </button>
+                <button class="quick__item" type="button" data-quick="Еженедельный отчет">
+                  <div class="quick__title">Еженедельный отчет</div>
+                  <div class="quick__sub">Сводка по неделе</div>
+                </button>
+                <button class="quick__item" type="button" data-quick="Ежемесячный отчет">
+                  <div class="quick__title">Ежемесячный отчет</div>
+                  <div class="quick__sub">Детальная статистика</div>
+                </button>
+                <button class="quick__item" type="button" data-quick="Произвольный период">
+                  <div class="quick__title">Произвольный период</div>
+                  <div class="quick__sub">Настраиваемый отчет</div>
+                </button>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card__head card__head--no-actions">
+                <h3>Форматы экспорта</h3>
+              </div>
+              <form class="formats" id="formatsForm">
+                <label class="check">
+                  <input type="checkbox" name="pdf" checked />
+                  <span class="check__box" aria-hidden="true"></span>
+                  <span class="check__label">PDF документ</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="excel" />
+                  <span class="check__box" aria-hidden="true"></span>
+                  <span class="check__label">Excel таблица</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="csv" />
+                  <span class="check__box" aria-hidden="true"></span>
+                  <span class="check__label">CSV файл</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="json" />
+                  <span class="check__box" aria-hidden="true"></span>
+                  <span class="check__label">JSON данные</span>
+                </label>
+              </form>
+            </section>
+          </aside>
+        </section>
+
+        <section class="card card--pdk">
+          <div class="card__head card__head--no-actions">
+            <h2>Соответствие предельно допустимым концентрациям (ПДК)</h2>
+          </div>
+
+          <div class="pdk">
+            <div class="pdk__row">
+              <div class="pdk__name">CO₂</div>
+              <div class="bar">
+                <div class="bar__fill bar__fill--ok" style="width: 88%"></div>
+              </div>
+              <div class="pdk__val">352 / 400 мг/м³</div>
+              <div class="pdk__pct pdk__pct--ok">88.0%</div>
+            </div>
+
+            <div class="pdk__row">
+              <div class="pdk__name">SO₂</div>
+              <div class="bar">
+                <div class="bar__fill bar__fill--ok" style="width: 82.9%"></div>
+              </div>
+              <div class="pdk__val">58 / 70 мкг/м³</div>
+              <div class="pdk__pct pdk__pct--ok">82.9%</div>
+            </div>
+
+            <div class="pdk__row">
+              <div class="pdk__name">NO₂</div>
+              <div class="bar">
+                <div class="bar__fill bar__fill--bad" style="width: 100%"></div>
+              </div>
+              <div class="pdk__val">65 / 50 мкг/м³</div>
+              <div class="pdk__pct pdk__pct--bad">130.0%</div>
+            </div>
+
+            <div class="pdk__row">
+              <div class="pdk__name">PM2.5</div>
+              <div class="bar">
+                <div class="bar__fill bar__fill--ok" style="width: 77.8%"></div>
+              </div>
+              <div class="pdk__val">35 / 45 мкг/м³</div>
+              <div class="pdk__pct pdk__pct--ok">77.8%</div>
+            </div>
+
+            <div class="pdk__row">
+              <div class="pdk__name">PM10</div>
+              <div class="bar">
+                <div class="bar__fill bar__fill--mid" style="width: 85%"></div>
+              </div>
+              <div class="pdk__val">68 / 80 мкг/м³</div>
+              <div class="pdk__pct pdk__pct--mid">85.0%</div>
+            </div>
+
+            <div class="pdk__note">
+              <span class="muted">
+                Общий статус соответствия: Обнаружено 1 превышение нормативов. Требуется принятие мер по снижению выбросов NO₂.
+              </span>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+      <div class="toast__inner" id="toastText">—</div>
+    </div>
+  </div>
+
+  <script src="./main.js"></script>
+</body>
+</html>

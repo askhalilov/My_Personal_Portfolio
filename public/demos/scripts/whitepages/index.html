@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Whitepages API Demo (Frontend Only)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2e; --panel2:#0f1730; --text:#e8eefc; --muted:#9fb0d0;
+      --accent:#7aa2ff; --ok:#46d39a; --warn:#ffd166; --bad:#ff5c7a; --line:rgba(255,255,255,.10);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:var(--sans); background:radial-gradient(1200px 700px at 20% -10%, #1b2b55 0, transparent 70%), var(--bg); color:var(--text)}
+    header{padding:20px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, rgba(255,255,255,.05), transparent)}
+    h1{margin:0 0 6px; font-size:18px; letter-spacing:.2px}
+    .sub{color:var(--muted); font-size:13px; line-height:1.35}
+
+    .wrap{max-width:1200px; margin:0 auto; padding:18px}
+    .grid{display:grid; grid-template-columns: 360px 1fr; gap:14px}
+    @media (max-width: 980px){.grid{grid-template-columns: 1fr}}
+
+    .card{background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow: 0 10px 40px rgba(0,0,0,.25)}
+    .card h2{margin:0; padding:12px 14px; font-size:14px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.03)}
+    .card .body{padding:14px}
+
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+    input, select, textarea{width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(0,0,0,.20); color:var(--text); outline:none}
+    input::placeholder, textarea::placeholder{color:rgba(159,176,208,.7)}
+    textarea{min-height:90px; resize:vertical; font-family:var(--mono); font-size:12px; line-height:1.35}
+
+    .row{display:flex; gap:10px}
+    .row > *{flex:1}
+
+    .btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    button{border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--text);
+      padding:10px 12px; border-radius:12px; cursor:pointer; font-size:13px}
+    button:hover{border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.08)}
+    button:disabled{opacity:.5; cursor:not-allowed}
+    .primary{border-color:rgba(122,162,255,.55); background:rgba(122,162,255,.14)}
+    .danger{border-color:rgba(255,92,122,.55); background:rgba(255,92,122,.12)}
+
+    .pill{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:rgba(0,0,0,.20);
+      padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
+    .dot{width:8px; height:8px; border-radius:50%}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+    .dot.bad{background:var(--bad)}
+
+    table{width:100%; border-collapse:collapse}
+    th, td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+    th{font-size:12px; color:var(--muted); text-align:left}
+    td{font-size:13px}
+
+    .mono{font-family:var(--mono); font-size:12px}
+    .muted{color:var(--muted)}
+    .right{text-align:right}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+    .kpi .box{flex:0 0 auto; padding:10px 12px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(0,0,0,.20)}
+    .kpi .box .n{font-size:18px; font-weight:700}
+    .kpi .box .t{font-size:11px; color:var(--muted)}
+
+    .log{font-family:var(--mono); font-size:12px; line-height:1.35; background:rgba(0,0,0,.25);
+      border:1px solid var(--line); border-radius:14px; padding:10px; max-height:260px; overflow:auto; white-space:pre-wrap}
+
+    .status{font-weight:700}
+    .S_PENDING{color:var(--warn)}
+    .S_RUNNING{color:var(--warn)}
+    .S_SUCCESS{color:var(--ok)}
+    .S_FAILED{color:var(--bad)}
+
+    .footerNote{margin-top:12px; color:var(--muted); font-size:12px; line-height:1.45}
+    code{font-family:var(--mono)}
+
+    .toggle{display:flex; gap:10px; align-items:center; margin-top:10px}
+    .toggle input{width:auto}
+
+    details{border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:rgba(0,0,0,.18)}
+    summary{cursor:pointer; color:var(--text); font-size:13px}
+    .small{font-size:12px; color:var(--muted)}
+
+    .tag{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.04); font-size:12px; color:var(--muted)}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Whitepages API </h1>
+    <div class="sub">
+     
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT: Controls -->
+    <div class="card">
+      <h2>Настройки</h2>
+      <div class="body">
+        <label>Режим</label>
+        <select id="mode">
+          <option value="mock">Mock API (в браузере)</option>
+          <option value="real">Real API (fetch)</option>
+        </select>
+
+        <label>Base URL (для Real API)</label>
+        <input id="baseUrl" placeholder="https://your-domain.tld/api" />
+        <div class="small">Для mock можно оставить пустым. Для real: должен быть разрешен CORS.</div>
+
+        <label>X-API-Key (для Real API)</label>
+        <input id="apiKey" placeholder="your-key" />
+
+        <hr style="border:none;border-top:1px solid var(--line); margin:14px 0"/>
+
+        <h3 style="margin:0 0 8px; font-size:14px">Создать run</h3>
+
+        <div class="row">
+          <div>
+            <label>country</label>
+            <input id="country" value="CO" maxlength="2" />
+          </div>
+          <div>
+            <label>count</label>
+            <input id="count" value="4" type="number" min="1" max="200" />
+          </div>
+        </div>
+
+        <label>pipeline_name</label>
+        <input id="pipeline" value="landing_page_multi_v3_threaded" />
+
+        <label>keywords pool (по одному на строку, опционально)</label>
+        <textarea id="keywords">Tuning studio
+Podcasts studio
+Construction of swimming pools and saunas
+online bookshop</textarea>
+
+        <div class="toggle">
+          <input id="autoRefresh" type="checkbox" />
+          <label for="autoRefresh" style="margin:0">Авто‑обновление (каждые 3 сек)</label>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="btnCreate">Создать run</button>
+          <button id="btnRefresh" disabled>Обновить run</button>
+          <button id="btnSeed">Сгенерировать демо‑данные</button>
+          <button class="danger" id="btnClear">Очистить storage</button>
+        </div>
+
+        <div class="footerNote">
+          <details>
+            <summary>Какие эндпоинты симулируются?</summary>
+            <div class="small" style="margin-top:8px; line-height:1.5">
+              <div><span class="tag">POST</span> <code>/v1/whitepages/runs</code></div>
+              <div><span class="tag">GET</span> <code>/v1/whitepages/runs/{run_id}</code></div>
+              <div><span class="tag">GET</span> <code>/v1/whitepages/tasks/{task_id}</code></div>
+              <div><span class="tag">POST</span> <code>/v1/whitepages/tasks/{task_id}/download</code></div>
+              <div><span class="tag">GET</span> <code>/v1/whitepages/files/{file_id}</code> (скачивание)</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Run + Tasks -->
+    <div class="card">
+      <h2>Run / Tasks</h2>
+      <div class="body">
+        <div class="kpi" id="kpi"></div>
+
+        <div class="row" style="align-items:center; margin-bottom:10px">
+          <div class="pill"><span class="dot" id="modeDot"></span><span id="modeLabel">Mock</span></div>
+          <div class="pill"><span class="muted">run_id:</span> <span class="mono" id="runId">—</span></div>
+          <div class="pill"><span class="muted">status:</span> <span class="status" id="runStatus">—</span></div>
+          <div class="pill"><span class="muted">updated:</span> <span class="mono" id="runUpdated">—</span></div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px">task_id</th>
+              <th style="width:110px">status</th>
+              <th>file_id</th>
+              <th style="width:220px">updated</th>
+              <th class="right" style="width:250px">actions</th>
+            </tr>
+          </thead>
+          <tbody id="tasksBody">
+            <tr><td colspan="5" class="muted">Пока нет run. Нажмите «Создать run» или «Сгенерировать демо‑данные».</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin:14px 0 8px; font-size:14px">Логи</h3>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  // ========= Utilities =========
+  const $ = (id) => document.getElementById(id);
+  const nowISO = () => new Date().toISOString();
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const rid = (prefix) => `${prefix}_${Math.random().toString(16).slice(2, 10)}${Math.random().toString(16).slice(2, 6)}`;
+
+  function log(line, obj) {
+    const el = $('log');
+    const ts = new Date().toLocaleTimeString();
+    const text = `[${ts}] ${line}` + (obj ? `\n${JSON.stringify(obj, null, 2)}` : '') + "\n";
+    el.textContent = text + el.textContent;
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function statusClass(s) {
+    return `S_${s || 'PENDING'}`;
+  }
+
+  // ========= Mock storage model =========
+  // We store everything in localStorage so refresh keeps state.
+  const LS_KEY = 'wp_demo_state_v1';
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || { runs:{}, tasks:{}, files:{} }; }
+    catch { return { runs:{}, tasks:{}, files:{} }; }
+  }
+  function saveState(state) {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  // ========= Mock API =========
+  // Implements the API contract in-browser.
+  const MockAPI = {
+    async createRun(body) {
+      const state = loadState();
+      const run_id = rid('run');
+
+      const count = clamp(Number(body.count || 1), 1, 200);
+      const country = String(body.country || 'CO').toUpperCase().slice(0,2);
+      const pipeline = String(body.pipeline_name || 'landing_page_multi_v3_threaded');
+      const kwPool = Array.isArray(body.keywords) && body.keywords.length ? body.keywords : [
+        'Tuning studio', 'Podcasts studio', 'Construction of swimming pools and saunas', 'online bookshop'
+      ];
+
+      const tasks = [];
+      for (let i=0; i<count; i++) {
+        const task_id = rid('tsk');
+        const task = {
+          task_id,
+          status: 'RUNNING',
+          updated_at: nowISO(),
+          archive_url: null,
+          file_id: null,
+          _mock: {
+            // Decide when task will succeed/fail.
+            created_at: Date.now(),
+            // 10% fail, rest success.
+            will_fail: Math.random() < 0.10,
+            // Finish in 5..20 seconds.
+            finish_at: Date.now() + (5000 + Math.floor(Math.random()*15000)),
+            keyword: kwPool[Math.floor(Math.random()*kwPool.length)],
+          }
+        };
+        state.tasks[task_id] = task;
+        tasks.push({ task_id });
+      }
+
+      const run = {
+        run_id,
+        created_at: nowISO(),
+        updated_at: nowISO(),
+        country,
+        count,
+        pipeline_name: pipeline,
+        status: 'RUNNING',
+        tasks
+      };
+      state.runs[run_id] = run;
+      saveState(state);
+
+      // Background simulation tick (no server): we update statuses lazily on reads.
+      return run;
+    },
+
+    _tick() {
+      const state = loadState();
+      const now = Date.now();
+
+      // Update tasks
+      for (const [task_id, task] of Object.entries(state.tasks)) {
+        if (!task || (task.status !== 'RUNNING' && task.status !== 'PENDING')) continue;
+        const m = task._mock;
+        if (!m) continue;
+
+        if (now >= m.finish_at) {
+          task.status = m.will_fail ? 'FAILED' : 'SUCCESS';
+          task.updated_at = nowISO();
+          if (task.status === 'SUCCESS') {
+            // External-like URL, just for realism.
+            task.archive_url = `https://external.example/archive/${task_id}.zip`;
+          }
+          state.tasks[task_id] = task;
+        }
+      }
+
+      // Update runs
+      for (const [run_id, run] of Object.entries(state.runs)) {
+        if (!run) continue;
+        const taskStates = run.tasks.map(t => state.tasks[t.task_id]).filter(Boolean);
+        const total = taskStates.length;
+        const success = taskStates.filter(t => t.status === 'SUCCESS').length;
+        const failed = taskStates.filter(t => t.status === 'FAILED').length;
+        const running = taskStates.filter(t => t.status === 'RUNNING' || t.status === 'PENDING').length;
+
+        if (total === 0) run.status = 'FAILED';
+        else if (success === total) run.status = 'SUCCESS';
+        else if (failed > 0 && running === 0 && success > 0) run.status = 'PARTIAL_SUCCESS';
+        else if (failed === total) run.status = 'FAILED';
+        else run.status = 'RUNNING';
+
+        run.updated_at = nowISO();
+        state.runs[run_id] = run;
+      }
+
+      saveState(state);
+    },
+
+    async getRun(run_id) {
+      this._tick();
+      const state = loadState();
+      const run = state.runs[run_id];
+      if (!run) throw httpError(404, 'NOT_FOUND', 'Run not found');
+
+      const tasks = run.tasks
+        .map(t => state.tasks[t.task_id])
+        .filter(Boolean)
+        .map(t => ({
+          task_id: t.task_id,
+          status: t.status,
+          updated_at: t.updated_at,
+          archive_url: t.archive_url,
+          file_id: t.file_id,
+          message: t.status === 'FAILED' ? 'Mock failure (10%)' : null,
+        }));
+
+      const progress = {
+        total: tasks.length,
+        success: tasks.filter(t=>t.status==='SUCCESS').length,
+        failed: tasks.filter(t=>t.status==='FAILED').length,
+        running: tasks.filter(t=>t.status==='RUNNING' || t.status==='PENDING').length,
+      };
+
+      return {
+        run_id: run.run_id,
+        status: run.status,
+        progress,
+        tasks,
+        updated_at: run.updated_at,
+      };
+    },
+
+    async getTask(task_id) {
+      this._tick();
+      const state = loadState();
+      const t = state.tasks[task_id];
+      if (!t) throw httpError(404, 'NOT_FOUND', 'Task not found');
+      return {
+        task_id: t.task_id,
+        status: t.status,
+        updated_at: t.updated_at,
+        archive_url: t.archive_url,
+        file_id: t.file_id,
+        message: t.status === 'FAILED' ? 'Mock failure (10%)' : null,
+      };
+    },
+
+    async downloadTask(task_id) {
+      this._tick();
+      const state = loadState();
+      const t = state.tasks[task_id];
+      if (!t) throw httpError(404, 'NOT_FOUND', 'Task not found');
+      if (t.status !== 'SUCCESS') throw httpError(409, 'TASK_NOT_READY', `Task status is ${t.status}, cannot download yet.`);
+      if (t.file_id && state.files[t.file_id]) {
+        return {
+          task_id,
+          file_id: t.file_id,
+          download_url: `./?file=${encodeURIComponent(t.file_id)}`
+        };
+      }
+
+      // Create a fake zip payload (actually a text file) for demo.
+      const file_id = rid('file');
+      const payload = {
+        file_id,
+        created_at: nowISO(),
+        task_id,
+        // For demo, store as base64 string.
+        content_base64: btoa(unescape(encodeURIComponent(
+          `Demo archive for ${task_id}\nGenerated at: ${nowISO()}\nStatus: SUCCESS\nExternal archive_url: ${t.archive_url}\n\n(This is a demo text file pretending to be a .zip)`
+        ))),
+        mime: 'application/zip',
+        filename: `${task_id}_whitepages.zip`
+      };
+
+      state.files[file_id] = payload;
+      t.file_id = file_id;
+      t.updated_at = nowISO();
+      state.tasks[task_id] = t;
+      saveState(state);
+
+      return {
+        task_id,
+        file_id,
+        download_url: `./?file=${encodeURIComponent(file_id)}`
+      };
+    },
+
+    async downloadFile(file_id) {
+      const state = loadState();
+      const f = state.files[file_id];
+      if (!f) throw httpError(404, 'NOT_FOUND', 'File not found');
+      const bytes = Uint8Array.from(atob(f.content_base64), c => c.charCodeAt(0));
+      return { bytes, mime: f.mime, filename: f.filename };
+    },
+  };
+
+  // ========= Real API client =========
+  // Uses fetch to your backend, with X-API-Key.
+  function makeRealClient() {
+    const baseUrl = $('baseUrl').value.trim().replace(/\/$/, '');
+    const apiKey = $('apiKey').value.trim();
+
+    async function request(method, path, body) {
+      if (!baseUrl) throw new Error('Base URL is empty (set it in settings)');
+      const url = baseUrl + path;
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      // For file download endpoint, you might return binary. In this demo we only call JSON endpoints.
+      const text = await res.text();
+      const isJson = (res.headers.get('content-type') || '').includes('application/json');
+      const data = isJson ? safeJson(text) : text;
+
+      if (!res.ok) {
+        const msg = data && data.message ? data.message : `HTTP ${res.status}`;
+        throw httpError(res.status, (data && data.error) || 'HTTP_ERROR', msg, data);
+      }
+      return data;
+    }
+
+    return {
+      createRun: (body) => request('POST', '/v1/whitepages/runs', body),
+      getRun: (run_id) => request('GET', `/v1/whitepages/runs/${encodeURIComponent(run_id)}`),
+      getTask: (task_id) => request('GET', `/v1/whitepages/tasks/${encodeURIComponent(task_id)}`),
+      downloadTask: (task_id) => request('POST', `/v1/whitepages/tasks/${encodeURIComponent(task_id)}/download`),
+    };
+  }
+
+  function safeJson(text) {
+    try { return JSON.parse(text); } catch { return null; }
+  }
+
+  function httpError(status, code, message, details) {
+    const err = new Error(message);
+    err.status = status;
+    err.code = code;
+    err.details = details;
+    return err;
+  }
+
+  // ========= UI State =========
+  let currentRunId = null;
+  let timer = null;
+
+  function getClient() {
+    return $('mode').value === 'real' ? makeRealClient() : MockAPI;
+  }
+
+  function updateModeUI() {
+    const mode = $('mode').value;
+    const dot = $('modeDot');
+    const label = $('modeLabel');
+
+    if (mode === 'real') {
+      dot.className = 'dot warn';
+      label.textContent = 'Real API';
+    } else {
+      dot.className = 'dot ok';
+      label.textContent = 'Mock API';
+    }
+  }
+
+  function setRunHeader({run_id, status, updated_at}) {
+    $('runId').textContent = run_id || '—';
+    $('runStatus').textContent = status || '—';
+    $('runStatus').className = `status ${statusClass(status)}`;
+    $('runUpdated').textContent = updated_at ? new Date(updated_at).toLocaleString() : '—';
+  }
+
+  function setKPI(progress) {
+    const el = $('kpi');
+    if (!progress) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = `
+      <div class="box"><div class="n">${progress.total}</div><div class="t">Total</div></div>
+      <div class="box"><div class="n" style="color:var(--ok)">${progress.success}</div><div class="t">Success</div></div>
+      <div class="box"><div class="n" style="color:var(--warn)">${progress.running}</div><div class="t">Running</div></div>
+      <div class="box"><div class="n" style="color:var(--bad)">${progress.failed}</div><div class="t">Failed</div></div>
+    `;
+  }
+
+  function renderTasks(tasks) {
+    const body = $('tasksBody');
+    if (!tasks || !tasks.length) {
+      body.innerHTML = `<tr><td colspan="5" class="muted">Нет задач.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = tasks.map(t => {
+      const upd = t.updated_at ? new Date(t.updated_at).toLocaleString() : '—';
+      const file = t.file_id ? `<span class="mono">${t.file_id}</span>` : `<span class="muted">—</span>`;
+      const btns = `
+        <button data-act="taskRefresh" data-id="${t.task_id}">Refresh</button>
+        <button data-act="taskDownload" data-id="${t.task_id}" ${t.status !== 'SUCCESS' ? 'disabled' : ''}>Download</button>
+        ${t.file_id ? `<button data-act="fileGet" data-id="${t.file_id}">Get file</button>` : ''}
+      `;
+
+      return `
+        <tr>
+          <td class="mono">${t.task_id}</td>
+          <td class="status ${statusClass(t.status)}">${t.status}</td>
+          <td>${file}</td>
+          <td class="mono">${upd}</td>
+          <td class="right">${btns}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function refreshRun() {
+    if (!currentRunId) return;
+    const client = getClient();
+
+    try {
+      const data = await client.getRun(currentRunId);
+      setRunHeader({ run_id: data.run_id, status: data.status, updated_at: data.updated_at });
+      setKPI(data.progress);
+      renderTasks(data.tasks);
+      $('btnRefresh').disabled = false;
+      log(`GET /v1/whitepages/runs/${currentRunId} -> ${data.status}`, data);
+    } catch (e) {
+      log(`Ошибка refreshRun: ${e.code || ''} ${e.message}`, e.details);
+    }
+  }
+
+  async function createRun() {
+    const country = $('country').value.trim().toUpperCase().slice(0,2);
+    const count = Number($('count').value || 1);
+    const pipeline_name = $('pipeline').value.trim();
+    const keywords = $('keywords').value
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const body = { country, count, pipeline_name };
+    if (keywords.length) body.keywords = keywords;
+
+    const client = getClient();
+
+    try {
+      const run = await client.createRun(body);
+      currentRunId = run.run_id;
+      $('btnRefresh').disabled = false;
+      log('POST /v1/whitepages/runs -> 201', run);
+      await refreshRun();
+    } catch (e) {
+      log(`Ошибка createRun: ${e.code || ''} ${e.message}`, e.details);
+    }
+  }
+
+  async function refreshTask(task_id) {
+    const client = getClient();
+    try {
+      const t = await client.getTask(task_id);
+      log(`GET /v1/whitepages/tasks/${task_id} -> ${t.status}`, t);
+      // Update UI by refreshing run (simpler)
+      await refreshRun();
+    } catch (e) {
+      log(`Ошибка refreshTask: ${e.code || ''} ${e.message}`, e.details);
+    }
+  }
+
+  async function downloadTask(task_id) {
+    const client = getClient();
+    try {
+      const r = await client.downloadTask(task_id);
+      log(`POST /v1/whitepages/tasks/${task_id}/download -> OK`, r);
+      await refreshRun();
+
+      // In mock mode we can immediately download the file
+      if ($('mode').value === 'mock') {
+        await downloadFile(r.file_id);
+      }
+    } catch (e) {
+      log(`Ошибка downloadTask: ${e.code || ''} ${e.message}`, e.details);
+    }
+  }
+
+  async function downloadFile(file_id) {
+    try {
+      const { bytes, mime, filename } = await MockAPI.downloadFile(file_id);
+      const blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `${file_id}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      log(`GET /v1/whitepages/files/${file_id} -> downloaded (${a.download})`);
+    } catch (e) {
+      log(`Ошибка downloadFile: ${e.code || ''} ${e.message}`, e.details);
+    }
+  }
+
+  function seedDemo() {
+    // Create a run quickly in mock
+    $('mode').value = 'mock';
+    updateModeUI();
+    $('country').value = 'CO';
+    $('count').value = '6';
+    $('pipeline').value = 'landing_page_multi_v3_threaded';
+    $('keywords').value = 'Tuning studio\nPodcasts studio\nConstruction of swimming pools and saunas\nonline bookshop';
+    createRun();
+  }
+
+  function clearStorage() {
+    localStorage.removeItem(LS_KEY);
+    currentRunId = null;
+    $('btnRefresh').disabled = true;
+    $('runId').textContent = '—';
+    $('runStatus').textContent = '—';
+    $('runUpdated').textContent = '—';
+    $('kpi').innerHTML = '';
+    $('tasksBody').innerHTML = `<tr><td colspan="5" class="muted">Storage очищен. Создайте новый run.</td></tr>`;
+    log('Storage очищен');
+  }
+
+  function setAutoRefresh(on) {
+    if (timer) { clearInterval(timer); timer = null; }
+    if (!on) return;
+    timer = setInterval(() => {
+      if (currentRunId) refreshRun();
+    }, 3000);
+  }
+
+  // ========= Event wiring =========
+  $('btnCreate').addEventListener('click', createRun);
+  $('btnRefresh').addEventListener('click', refreshRun);
+  $('btnSeed').addEventListener('click', seedDemo);
+  $('btnClear').addEventListener('click', clearStorage);
+
+  $('mode').addEventListener('change', () => {
+    updateModeUI();
+    log(`Режим переключен: ${$('mode').value}`);
+    // Refresh current run in new mode if possible
+    if (currentRunId) refreshRun();
+  });
+
+  $('autoRefresh').addEventListener('change', (e) => setAutoRefresh(e.target.checked));
+
+  $('tasksBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const act = btn.getAttribute('data-act');
+    const id = btn.getAttribute('data-id');
+    if (act === 'taskRefresh') refreshTask(id);
+    if (act === 'taskDownload') downloadTask(id);
+    if (act === 'fileGet') downloadFile(id);
+  });
+
+  // ========= Optional: deep link to mock file =========
+  const params = new URLSearchParams(location.search);
+  const fileId = params.get('file');
+  if (fileId) {
+    // If opened with ?file=..., auto download
+    $('mode').value = 'mock';
+    updateModeUI();
+    log(`Открыто с параметром file=${fileId}, пробую скачать...`);
+    downloadFile(fileId);
+  }
+
+  // Initial UI
+  updateModeUI();
+  $('log').textContent = 'Готово. Нажмите «Сгенерировать демо‑данные» или «Создать run».\n';
+})();
+</script>
+</body>
+</html>

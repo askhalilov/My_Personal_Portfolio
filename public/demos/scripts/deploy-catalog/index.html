@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deploy Catalog API — Demo (Frontend Only)</title>
+  <style>
+    :root{
+      --bg0:#070a12; --bg1:#0b1022; --card:rgba(255,255,255,.06); --card2:rgba(255,255,255,.04);
+      --text:#eef3ff; --muted:rgba(238,243,255,.68); --line:rgba(255,255,255,.12);
+      --a:#7c5cff; --b:#32d8ff; --ok:#3ee6a6; --warn:#ffd166; --bad:#ff5c7a;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --r: 18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:var(--sans); color:var(--text);
+      background:
+        radial-gradient(1100px 600px at 10% -10%, rgba(124,92,255,.45), transparent 65%),
+        radial-gradient(900px 500px at 95% 10%, rgba(50,216,255,.28), transparent 70%),
+        radial-gradient(700px 420px at 70% 120%, rgba(62,230,166,.16), transparent 70%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+    }
+
+    /* top bar */
+    .top{position:sticky; top:0; z-index:10; backdrop-filter: blur(14px);
+      background:linear-gradient(180deg, rgba(7,10,18,.88), rgba(7,10,18,.55));
+      border-bottom:1px solid var(--line);
+    }
+    .top .inner{max-width:1280px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; min-width:240px}
+    .logo{width:30px; height:30px; border-radius:10px; background:linear-gradient(135deg, var(--a), var(--b)); box-shadow:0 10px 30px rgba(124,92,255,.28)}
+    .brand h1{margin:0; font-size:14px; letter-spacing:.3px}
+    .brand .sub{font-size:12px; color:var(--muted)}
+
+    .pill{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line);
+      background:rgba(255,255,255,.05); padding:8px 10px; border-radius:999px; font-size:12px; color:var(--muted)}
+    .dot{width:9px; height:9px; border-radius:50%}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+
+    .grow{flex:1}
+    .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+
+    /* layout */
+    .wrap{max-width:1280px; margin:0 auto; padding:18px}
+    .grid{display:grid; grid-template-columns: 380px 1fr; gap:14px; align-items:start}
+    @media (max-width: 980px){.grid{grid-template-columns: 1fr}}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--line); border-radius:var(--r); overflow:hidden; box-shadow: var(--shadow)}
+    .card .head{display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 14px; border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))}
+    .card .head h2{margin:0; font-size:13px; letter-spacing:.25px}
+    .card .body{padding:14px}
+
+    /* controls */
+    label{display:block; font-size:11px; color:var(--muted); margin:10px 0 6px}
+    input, select, textarea{
+      width:100%; padding:10px 10px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(0,0,0,.22); color:var(--text); outline:none
+    }
+    textarea{min-height:98px; resize:vertical; font-family:var(--mono); font-size:12px; line-height:1.35}
+    input::placeholder, textarea::placeholder{color:rgba(238,243,255,.45)}
+
+    .row{display:flex; gap:10px}
+    .row > *{flex:1}
+
+    button{border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text);
+      padding:10px 12px; border-radius:14px; cursor:pointer; font-size:13px}
+    button:hover{background:rgba(255,255,255,.10); border-color:rgba(255,255,255,.18)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .primary{background:linear-gradient(135deg, rgba(124,92,255,.25), rgba(50,216,255,.14)); border-color:rgba(124,92,255,.45)}
+    .danger{background:rgba(255,92,122,.12); border-color:rgba(255,92,122,.55)}
+
+    .btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+
+    /* tabs */
+    .tabs{display:flex; gap:8px; flex-wrap:wrap}
+    .tab{padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(0,0,0,.18);
+      font-size:12px; color:var(--muted); cursor:pointer; user-select:none}
+    .tab.active{color:var(--text); border-color:rgba(124,92,255,.55); background:rgba(124,92,255,.14)}
+
+    /* tables */
+    table{width:100%; border-collapse:collapse}
+    th,td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+    th{font-size:11px; color:var(--muted); text-align:left}
+    td{font-size:13px}
+    .mono{font-family:var(--mono); font-size:12px}
+    .muted{color:var(--muted)}
+    .right{text-align:right}
+
+    /* status */
+    .status{font-weight:800; letter-spacing:.25px}
+    .S_PENDING,.S_RESOLVING_DNS,.S_CONNECTING,.S_CLEANING,.S_UPLOADING{color:var(--warn)}
+    .S_DONE{color:var(--ok)}
+    .S_FAILED{color:var(--bad)}
+
+    /* progress */
+    .bar{height:10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10); overflow:hidden}
+    .bar > i{display:block; height:100%; width:0%; background:linear-gradient(90deg, rgba(124,92,255,.9), rgba(50,216,255,.9));}
+
+    /* cards list */
+    .list{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px}
+    @media (max-width: 980px){.list{grid-template-columns: 1fr}}
+    .fileCard{border:1px solid var(--line); background:rgba(0,0,0,.18); border-radius:16px; padding:12px}
+    .fileCard .name{font-weight:800; font-size:13px}
+    .fileCard .meta{margin-top:6px; color:var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap}
+
+    /* log */
+    .log{font-family:var(--mono); font-size:12px; line-height:1.35; background:rgba(0,0,0,.28);
+      border:1px solid var(--line); border-radius:16px; padding:12px; max-height:280px; overflow:auto; white-space:pre-wrap}
+
+    /* code box */
+    .codeBox{border:1px solid var(--line); background:rgba(0,0,0,.20); border-radius:16px; padding:12px}
+    .codeBox pre{margin:0; overflow:auto; font-family:var(--mono); font-size:12px; line-height:1.35}
+
+    .hint{font-size:12px; color:var(--muted); line-height:1.45}
+    .sp{height:10px}
+
+    details{border:1px solid var(--line); background:rgba(0,0,0,.16); border-radius:16px; padding:10px 12px}
+    summary{cursor:pointer; font-weight:700; font-size:12px}
+
+    .kbd{font-family:var(--mono); font-size:11px; padding:2px 7px; border-radius:10px; border:1px solid var(--line); background:rgba(0,0,0,.18)}
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Deploy Catalog API</h1>
+        <div class="sub"> API для каталога архивов и деплоя по доменам</div>
+      </div>
+    </div>
+
+    <div class="grow"></div>
+
+    <div class="pill"><span class="dot" id="modeDot"></span><span id="modeLabel">Mock API</span></div>
+    <div class="pill"><span class="muted">run:</span> <span class="mono" id="runId">—</span></div>
+    <div class="pill"><span class="muted">status:</span> <span class="status" id="runStatus">—</span></div>
+
+    <div class="actions">
+      <button id="btnDemo" class="primary">Демо-наполнение</button>
+      <button id="btnClear" class="danger">Очистить</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- Left: Settings + Create run -->
+    <div class="card">
+      <div class="head">
+        <h2>Настройки и запуск</h2>
+        <div class="tabs" style="gap:6px">
+          <div class="tab active" data-tab="settings">Settings</div>
+          <div class="tab" data-tab="api">API</div>
+        </div>
+      </div>
+
+      <div class="body" id="panelSettings">
+        <label>Mode</label>
+        <select id="mode">
+          <option value="mock">Mock API (в браузере)</option>
+          <option value="real">Real API (fetch)</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label>Base URL (Real API)</label>
+            <input id="baseUrl" placeholder="https://your-domain.tld/api" />
+          </div>
+          <div>
+            <label>X-API-Key</label>
+            <input id="apiKey" placeholder="секретный ключ" />
+          </div>
+        </div>
+
+        <div class="sp"></div>
+
+        <label>Каталог архивов (.zip)</label>
+        <div class="row">
+          <div>
+            <input id="archiveName" placeholder="например: pack-01.zip" />
+          </div>
+          <div>
+            <button id="btnAddArchive">Добавить (mock)</button>
+          </div>
+        </div>
+        <div class="hint">В mock режиме архив — это запись в каталоге. В real режиме — обычно это будет upload endpoint.</div>
+
+        <div class="sp"></div>
+
+        <label>Domains (по одному в строку)</label>
+        <textarea id="domains"></textarea>
+
+        <div class="row">
+          <div>
+            <label>Remote path template</label>
+            <input id="remoteTpl" value="/var/www/{domain}" />
+          </div>
+          <div>
+            <label>SSH user</label>
+            <input id="sshUser" value="root" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Folder mapping</label>
+            <select id="folderMap">
+              <option value="by_index">По индексу (как в скрипте: домен #1 -> распаковка #1)</option>
+              <option value="single">Один архив на все домены</option>
+            </select>
+          </div>
+          <div>
+            <label>Concurrency</label>
+            <input id="concurrency" type="number" min="1" max="50" value="6" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Dry run</label>
+            <select id="dryRun">
+              <option value="false">false</option>
+              <option value="true">true</option>
+            </select>
+          </div>
+          <div>
+            <label>Auto refresh</label>
+            <select id="autoRefresh">
+              <option value="on">on (каждые 2.5s)</option>
+              <option value="off">off</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button id="btnCreateRun" class="primary">Запустить deploy run</button>
+          <button id="btnRefresh" disabled>Обновить run</button>
+          <button id="btnDownloadLog" disabled>Скачать log</button>
+        </div>
+
+        <div class="hint">
+          Под капотом mock симулирует этапы: <span class="kbd">RESOLVING_DNS</span> → <span class="kbd">CONNECTING</span> → <span class="kbd">CLEANING</span> → <span class="kbd">UPLOADING</span> → <span class="kbd">DONE</span>.
+        </div>
+      </div>
+
+      <div class="body" id="panelApi" style="display:none">
+        <div class="hint">
+          Этот демо-сайт симулирует REST API (удобно для показов, пока backend не готов).
+          В real режиме он будет делать <span class="mono">fetch</span> на ваш сервер.
+        </div>
+        <div class="sp"></div>
+
+        <details open>
+          <summary>Endpoints (контракт)</summary>
+          <div class="hint" style="margin-top:8px">
+            <div><span class="kbd">GET</span> <span class="mono">/v1/deploy/catalog/archives</span></div>
+            <div><span class="kbd">POST</span> <span class="mono">/v1/deploy/catalog/archives</span> (real: upload, mock: add)</div>
+            <div><span class="kbd">DELETE</span> <span class="mono">/v1/deploy/catalog/archives/{archive_id}</span></div>
+            <div class="sp"></div>
+            <div><span class="kbd">GET</span> <span class="mono">/v1/deploy/domains</span></div>
+            <div><span class="kbd">PUT</span> <span class="mono">/v1/deploy/domains</span></div>
+            <div class="sp"></div>
+            <div><span class="kbd">POST</span> <span class="mono">/v1/deploy/runs</span></div>
+            <div><span class="kbd">GET</span> <span class="mono">/v1/deploy/runs/{run_id}</span></div>
+            <div><span class="kbd">GET</span> <span class="mono">/v1/deploy/runs/{run_id}/log</span></div>
+          </div>
+        </details>
+
+        <div class="sp"></div>
+
+        <details>
+          <summary>Request/Response console</summary>
+          <div class="hint" style="margin-top:8px">Последний запрос и ответ (для демонстрации API).</div>
+          <div class="sp"></div>
+          <div class="codeBox"><pre id="lastReq">—</pre></div>
+          <div class="sp"></div>
+          <div class="codeBox"><pre id="lastRes">—</pre></div>
+        </details>
+      </div>
+    </div>
+
+
+    <!-- Right: Tabs content -->
+    <div class="card">
+      <div class="head">
+        <h2>Каталог • Домены • Запуски • Логи</h2>
+        <div class="tabs">
+          <div class="tab active" data-rtab="catalog">Catalog</div>
+          <div class="tab" data-rtab="domains">Domains</div>
+          <div class="tab" data-rtab="runs">Runs</div>
+          <div class="tab" data-rtab="logs">Logs</div>
+        </div>
+      </div>
+
+      <div class="body" id="tabCatalog">
+        <div class="hint">Каталог архивов (.zip). В реальном backend это обычно папка <span class="mono">replace/</span>.</div>
+        <div class="sp"></div>
+        <div id="archivesList" class="list"></div>
+      </div>
+
+      <div class="body" id="tabDomains" style="display:none">
+        <div class="row" style="align-items:flex-end">
+          <div>
+            <label>Domains (editable)</label>
+            <textarea id="domainsMirror"></textarea>
+          </div>
+          <div style="flex:0 0 180px">
+            <button id="btnSaveDomains" class="primary" style="width:100%">Сохранить</button>
+            <div class="sp"></div>
+            <button id="btnValidateDomains" style="width:100%">Проверить</button>
+          </div>
+        </div>
+        <div class="sp"></div>
+        <div class="hint" id="domainsHint">—</div>
+      </div>
+
+      <div class="body" id="tabRuns" style="display:none">
+        <div class="hint">История запусков (runs). Откройте run, чтобы увидеть задачи по доменам.</div>
+        <div class="sp"></div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:220px">run_id</th>
+              <th style="width:120px">status</th>
+              <th>summary</th>
+              <th style="width:220px">updated</th>
+              <th class="right" style="width:210px">actions</th>
+            </tr>
+          </thead>
+          <tbody id="runsBody">
+            <tr><td colspan="5" class="muted">Пока нет запусков.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="sp"></div>
+
+        <details id="runDetails" style="display:none" open>
+          <summary>Tasks в выбранном run</summary>
+          <div class="sp"></div>
+          <div class="bar"><i id="runBar"></i></div>
+          <div class="sp"></div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:260px">domain</th>
+                <th style="width:140px">status</th>
+                <th style="width:180px">server_ip</th>
+                <th>message</th>
+                <th class="right" style="width:220px">updated</th>
+              </tr>
+            </thead>
+            <tbody id="tasksBody">
+              <tr><td colspan="5" class="muted">—</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </div>
+
+      <div class="body" id="tabLogs" style="display:none">
+        <div class="row" style="align-items:flex-end">
+          <div>
+            <label>Логи текущего run</label>
+            <div class="log" id="log"></div>
+          </div>
+          <div style="flex:0 0 220px">
+            <button id="btnCopyLog" style="width:100%">Copy</button>
+            <div class="sp"></div>
+            <button id="btnDownloadLog2" class="primary" style="width:100%" disabled>Download</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const nowISO = () => new Date().toISOString();
+  const rid = (p) => `${p}_${Math.random().toString(16).slice(2,10)}${Math.random().toString(16).slice(2,6)}`;
+  const LS = 'deploy_catalog_demo_v1';
+
+  // ======= helpers =======
+  function safeJson(x){ try { return JSON.parse(x); } catch { return null; } }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+  function statusClass(s){ return `S_${s||'PENDING'}`; }
+
+  function setLast(req, res){
+    const reqEl = $('lastReq');
+    const resEl = $('lastRes');
+    if (reqEl) reqEl.textContent = req ? JSON.stringify(req, null, 2) : '—';
+    if (resEl) resEl.textContent = res ? JSON.stringify(res, null, 2) : '—';
+  }
+
+  function logLine(msg){
+    const el = $('log');
+    const ts = new Date().toLocaleTimeString();
+    el.textContent = `[${ts}] ${msg}\n` + el.textContent;
+  }
+
+  function downloadText(filename, text){
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function loadState(){
+    const s = safeJson(localStorage.getItem(LS));
+    return s || { archives:[], domains:[], runs:{}, runOrder:[] };
+  }
+  function saveState(s){ localStorage.setItem(LS, JSON.stringify(s)); }
+
+  // ======= default domains (demo) =======
+  const DEFAULT_DOMAINS = [
+    'kaltechservices.com',
+    'maffec.com',
+    'magiccracktv.com'
+  ];
+
+  // ======= Mock API =======
+  const MockAPI = {
+    _tick(){
+      const st = loadState();
+      const now = Date.now();
+      for (const run_id of st.runOrder) {
+        const run = st.runs[run_id];
+        if (!run) continue;
+        if (run.status === 'DONE' || run.status === 'FAILED' || run.status === 'PARTIAL') continue;
+
+        // progress tasks
+        for (const t of run.tasks) {
+          if (t.status === 'DONE' || t.status === 'FAILED') continue;
+          if (!t._m) continue;
+          if (now < t._m.nextAt) continue;
+
+          const step = t._m.step;
+          const steps = ['PENDING','RESOLVING_DNS','CONNECTING','CLEANING','UPLOADING','DONE'];
+          const idx = steps.indexOf(step);
+
+          // fail chance for realism
+          if (!t._m.failedOnce && Math.random() < 0.06 && idx >= 1) {
+            t._m.failedOnce = true;
+            t.status = 'FAILED';
+            t.message = 'SCP/SSH error (mock)';
+            t.updated_at = nowISO();
+            continue;
+          }
+
+          const next = steps[Math.min(idx+1, steps.length-1)];
+          t._m.step = next;
+          t.status = next;
+          if (next === 'RESOLVING_DNS') {
+            t.server_ip = t.server_ip || t._m.pickIp();
+            t.message = 'Resolving A/AAAA…';
+          }
+          if (next === 'CONNECTING') t.message = 'Connecting via SSH…';
+          if (next === 'CLEANING') t.message = 'rm -rf /var/www/{domain}/*';
+          if (next === 'UPLOADING') t.message = 'Uploading files (scp)…';
+          if (next === 'DONE') t.message = 'Successfully updated';
+
+          t.updated_at = nowISO();
+          t._m.nextAt = now + (650 + Math.floor(Math.random()*1200));
+
+          // append log
+          run._log.push(`[${new Date().toISOString()}] ${t.domain} -> ${t.status}${t.server_ip ? ' @ '+t.server_ip : ''}`);
+        }
+
+        // update run status
+        const total = run.tasks.length;
+        const done = run.tasks.filter(x=>x.status==='DONE').length;
+        const failed = run.tasks.filter(x=>x.status==='FAILED').length;
+        const running = total - done - failed;
+        if (done === total) run.status = 'DONE';
+        else if (failed === total) run.status = 'FAILED';
+        else if (failed > 0 && running === 0) run.status = 'PARTIAL';
+        else run.status = 'RUNNING';
+
+        run.updated_at = nowISO();
+        st.runs[run_id] = run;
+      }
+      saveState(st);
+    },
+
+    async listArchives(){
+      const st = loadState();
+      return { items: st.archives.slice().sort((a,b)=>b.created_at.localeCompare(a.created_at)) };
+    },
+
+    async addArchive({name}){
+      const st = loadState();
+      const n = (name || '').trim();
+      if (!n) throw err(422,'VALIDATION_ERROR','archive name is required');
+      const item = {
+        archive_id: rid('arc'),
+        name: n.endsWith('.zip') ? n : (n + '.zip'),
+        size_kb: 120 + Math.floor(Math.random()*4800),
+        created_at: nowISO(),
+      };
+      st.archives.push(item);
+      saveState(st);
+      return item;
+    },
+
+    async deleteArchive(archive_id){
+      const st = loadState();
+      st.archives = st.archives.filter(a => a.archive_id !== archive_id);
+      saveState(st);
+      return { ok:true };
+    },
+
+    async getDomains(){
+      const st = loadState();
+      return { items: st.domains.length ? st.domains : DEFAULT_DOMAINS };
+    },
+
+    async putDomains({items}){
+      const st = loadState();
+      const clean = (items||[])
+        .map(s => String(s||'').trim())
+        .filter(Boolean)
+        .map(s => s.replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/$/,'').toLowerCase());
+      st.domains = Array.from(new Set(clean));
+      saveState(st);
+      return { items: st.domains };
+    },
+
+    async createRun(body){
+      this._tick();
+      const st = loadState();
+      const domains = (body.domains && body.domains.length) ? body.domains : (st.domains.length ? st.domains : DEFAULT_DOMAINS);
+      if (!st.archives.length) throw err(409,'NO_ARCHIVES','No archives in catalog. Add at least one .zip');
+
+      const run_id = rid('run');
+      const run = {
+        run_id,
+        status:'RUNNING',
+        created_at: nowISO(),
+        updated_at: nowISO(),
+        config: {
+          remote_path_template: body.remote_path_template || '/var/www/{domain}',
+          ssh_user: body.ssh_user || 'root',
+          folder_mapping: body.folder_mapping || 'by_index',
+          concurrency: clamp(Number(body.concurrency||6), 1, 50),
+          dry_run: !!body.dry_run,
+        },
+        archives: st.archives.slice(0, Math.min(st.archives.length, domains.length)).map(a=>({archive_id:a.archive_id, name:a.name})),
+        tasks: [],
+        _log: []
+      };
+
+      // mock servers pool (we do NOT store real secrets on frontend)
+      const ips = ['31.97.54.196','92.113.26.211','217.65.144.105','45.133.178.227','85.121.5.120','195.35.2.168'];
+
+      for (let i=0;i<domains.length;i++) {
+        const domain = String(domains[i]);
+        const t = {
+          task_id: rid('tsk'),
+          domain,
+          status: 'PENDING',
+          server_ip: null,
+          message: 'Queued…',
+          updated_at: nowISO(),
+          _m: {
+            step: 'PENDING',
+            nextAt: Date.now() + (250 + Math.floor(Math.random()*600)),
+            failedOnce:false,
+            pickIp: () => ips[Math.floor(Math.random()*ips.length)]
+          }
+        };
+        run.tasks.push(t);
+      }
+
+      run._log.push(`[${new Date().toISOString()}] Run created: ${run_id}`);
+      st.runs[run_id] = run;
+      st.runOrder.unshift(run_id);
+      saveState(st);
+      return { run_id, created_at: run.created_at, status: run.status };
+    },
+
+    async getRun(run_id){
+      this._tick();
+      const st = loadState();
+      const run = st.runs[run_id];
+      if (!run) throw err(404,'NOT_FOUND','Run not found');
+
+      const total = run.tasks.length;
+      const done = run.tasks.filter(x=>x.status==='DONE').length;
+      const failed = run.tasks.filter(x=>x.status==='FAILED').length;
+      const running = total - done - failed;
+
+      return {
+        run_id: run.run_id,
+        status: run.status,
+        created_at: run.created_at,
+        updated_at: run.updated_at,
+        progress: { total, done, running, failed },
+        config: run.config,
+        tasks: run.tasks.map(t => ({
+          task_id: t.task_id,
+          domain: t.domain,
+          status: t.status,
+          server_ip: t.server_ip,
+          message: t.message,
+          updated_at: t.updated_at,
+        }))
+      };
+    },
+
+    async listRuns(){
+      this._tick();
+      const st = loadState();
+      return { items: st.runOrder.map(id => st.runs[id]).filter(Boolean).map(run => {
+        const total = run.tasks.length;
+        const done = run.tasks.filter(x=>x.status==='DONE').length;
+        const failed = run.tasks.filter(x=>x.status==='FAILED').length;
+        return {
+          run_id: run.run_id,
+          status: run.status,
+          created_at: run.created_at,
+          updated_at: run.updated_at,
+          summary: `${done}/${total} done, ${failed} failed, ${run.archives.length} archives`,
+        };
+      }) };
+    },
+
+    async getRunLog(run_id){
+      this._tick();
+      const st = loadState();
+      const run = st.runs[run_id];
+      if (!run) throw err(404,'NOT_FOUND','Run not found');
+      return { run_id, lines: run._log.slice().reverse() };
+    }
+  };
+
+  // ======= Real API client (fetch) =======
+  function makeReal(){
+    const base = $('baseUrl').value.trim().replace(/\/$/, '');
+    const key  = $('apiKey').value.trim();
+
+    async function request(method, path, body){
+      if (!base) throw err(400,'NO_BASE_URL','Base URL is empty');
+      const url = base + path;
+      const headers = { 'Content-Type':'application/json' };
+      if (key) headers['X-API-Key'] = key;
+      const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+      const text = await res.text();
+      const isJson = (res.headers.get('content-type')||'').includes('application/json');
+      const data = isJson ? safeJson(text) : text;
+      if (!res.ok) {
+        const msg = data?.message || `HTTP ${res.status}`;
+        throw err(res.status, data?.error || 'HTTP_ERROR', msg, data);
+      }
+      return data;
+    }
+
+    return {
+      listArchives: () => request('GET','/v1/deploy/catalog/archives'),
+      addArchive: (b) => request('POST','/v1/deploy/catalog/archives', b),
+      deleteArchive: (id) => request('DELETE',`/v1/deploy/catalog/archives/${encodeURIComponent(id)}`),
+      getDomains: () => request('GET','/v1/deploy/domains'),
+      putDomains: (b) => request('PUT','/v1/deploy/domains', b),
+      createRun: (b) => request('POST','/v1/deploy/runs', b),
+      getRun: (id) => request('GET',`/v1/deploy/runs/${encodeURIComponent(id)}`),
+      listRuns: () => request('GET','/v1/deploy/runs'),
+      getRunLog: (id) => request('GET',`/v1/deploy/runs/${encodeURIComponent(id)}/log`),
+    };
+  }
+
+  function client(){ return $('mode').value === 'real' ? makeReal() : MockAPI; }
+
+  function err(status, code, message, details){
+    const e = new Error(message);
+    e.status = status; e.code = code; e.details = details;
+    return e;
+  }
+
+  // ======= UI state =======
+  let currentRunId = null;
+  let timer = null;
+
+  function setModeUI(){
+    const m = $('mode').value;
+    $('modeDot').className = 'dot ' + (m === 'real' ? 'warn' : 'ok');
+    $('modeLabel').textContent = m === 'real' ? 'Real API' : 'Mock API';
+  }
+
+  function selectPanel(which){
+    const tabs = document.querySelectorAll('[data-tab]');
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === which));
+    $('panelSettings').style.display = (which === 'settings') ? '' : 'none';
+    $('panelApi').style.display = (which === 'api') ? '' : 'none';
+  }
+
+  function selectRightTab(which){
+    const tabs = document.querySelectorAll('[data-rtab]');
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.rtab === which));
+    $('tabCatalog').style.display = (which==='catalog') ? '' : 'none';
+    $('tabDomains').style.display = (which==='domains') ? '' : 'none';
+    $('tabRuns').style.display = (which==='runs') ? '' : 'none';
+    $('tabLogs').style.display = (which==='logs') ? '' : 'none';
+  }
+
+  function setRunHeader(status){
+    $('runId').textContent = currentRunId || '—';
+    $('runStatus').textContent = status || '—';
+    $('runStatus').className = `status ${statusClass(status)}`;
+  }
+
+  // ======= render =======
+  async function renderCatalog(){
+    try{
+      const req = { method:'GET', path:'/v1/deploy/catalog/archives' };
+      const res = await client().listArchives();
+      setLast(req,res);
+
+      const el = $('archivesList');
+      if (!res.items?.length){
+        el.innerHTML = `<div class="fileCard"><div class="name">Пусто</div><div class="meta">Добавьте архив (mock) или подключите real API.</div></div>`;
+        return;
+      }
+      el.innerHTML = res.items.map(a => `
+        <div class="fileCard">
+          <div class="name">${escapeHtml(a.name)}</div>
+          <div class="meta">
+            <span class="mono">${a.archive_id}</span>
+            <span>${a.size_kb} KB</span>
+            <span>${new Date(a.created_at).toLocaleString()}</span>
+          </div>
+          <div class="sp"></div>
+          <div class="btns">
+            <button data-act="delArchive" data-id="${a.archive_id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch(e){
+      logLine(`Catalog error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function syncDomainsToUI(){
+    try{
+      const req = { method:'GET', path:'/v1/deploy/domains' };
+      const res = await client().getDomains();
+      setLast(req,res);
+      const text = (res.items || []).join('\n');
+      $('domains').value = text;
+      $('domainsMirror').value = text;
+      $('domainsHint').textContent = `Домены: ${res.items?.length || 0}`;
+    } catch(e){
+      // fallback
+      const text = DEFAULT_DOMAINS.join('\n');
+      $('domains').value = text;
+      $('domainsMirror').value = text;
+      $('domainsHint').textContent = `Домены: ${DEFAULT_DOMAINS.length} (fallback)`;
+    }
+  }
+
+  async function renderRuns(){
+    try{
+      const req = { method:'GET', path:'/v1/deploy/runs' };
+      const res = await (client().listRuns ? client().listRuns() : MockAPI.listRuns());
+      setLast(req,res);
+      const body = $('runsBody');
+      if (!res.items?.length){
+        body.innerHTML = `<tr><td colspan="5" class="muted">Пока нет запусков.</td></tr>`;
+        $('runDetails').style.display = 'none';
+        return;
+      }
+      body.innerHTML = res.items.map(r => `
+        <tr>
+          <td class="mono">${r.run_id}</td>
+          <td class="status ${statusClass(r.status)}">${r.status}</td>
+          <td class="muted">${escapeHtml(r.summary || '')}</td>
+          <td class="mono">${new Date(r.updated_at).toLocaleString()}</td>
+          <td class="right">
+            <button data-act="openRun" data-id="${r.run_id}">Open</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch(e){
+      logLine(`Runs error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function refreshRun(){
+    if (!currentRunId) return;
+    try{
+      const req = { method:'GET', path:`/v1/deploy/runs/${currentRunId}` };
+      const res = await client().getRun(currentRunId);
+      setLast(req,res);
+
+      setRunHeader(res.status);
+      $('btnRefresh').disabled = false;
+      $('btnDownloadLog').disabled = false;
+      $('btnDownloadLog2').disabled = false;
+
+      // tasks table
+      $('runDetails').style.display = '';
+      const tb = $('tasksBody');
+      tb.innerHTML = res.tasks.map(t => `
+        <tr>
+          <td class="mono">${escapeHtml(t.domain)}</td>
+          <td class="status ${statusClass(t.status)}">${t.status}</td>
+          <td class="mono">${t.server_ip ? escapeHtml(t.server_ip) : '<span class="muted">—</span>'}</td>
+          <td class="muted">${escapeHtml(t.message || '')}</td>
+          <td class="mono right">${new Date(t.updated_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      // bar
+      const p = res.progress;
+      const pct = p.total ? Math.round(((p.done + p.failed) / p.total) * 100) : 0;
+      $('runBar').style.width = pct + '%';
+
+      // log
+      await refreshLog();
+
+      // keep runs table fresh
+      await renderRuns();
+
+    } catch(e){
+      logLine(`Run refresh error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function refreshLog(){
+    if (!currentRunId) return;
+    try{
+      const req = { method:'GET', path:`/v1/deploy/runs/${currentRunId}/log` };
+      const res = await client().getRunLog(currentRunId);
+      setLast(req,res);
+      $('log').textContent = (res.lines || []).join('\n');
+    } catch(e){
+      // keep whatever is there
+    }
+  }
+
+  // ======= actions =======
+  async function addArchive(){
+    const name = $('archiveName').value.trim();
+    try{
+      const req = { method:'POST', path:'/v1/deploy/catalog/archives', body:{name} };
+      const res = await client().addArchive({name});
+      setLast(req,res);
+      $('archiveName').value = '';
+      logLine(`Added archive: ${res.name}`);
+      await renderCatalog();
+    } catch(e){
+      logLine(`Add archive error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function delArchive(id){
+    try{
+      const req = { method:'DELETE', path:`/v1/deploy/catalog/archives/${id}` };
+      const res = await client().deleteArchive(id);
+      setLast(req,res);
+      logLine(`Deleted archive: ${id}`);
+      await renderCatalog();
+    } catch(e){
+      logLine(`Delete archive error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function saveDomainsFromMirror(){
+    const items = $('domainsMirror').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    try{
+      const req = { method:'PUT', path:'/v1/deploy/domains', body:{items} };
+      const res = await client().putDomains({items});
+      setLast(req,res);
+      logLine(`Domains saved: ${res.items.length}`);
+      await syncDomainsToUI();
+    } catch(e){
+      logLine(`Save domains error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  function validateDomains(){
+    const items = $('domainsMirror').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    const bad = [];
+    const ok = [];
+    for (const d of items){
+      const clean = d.replace(/^https?:\/\//,'').replace(/^www\./,'');
+      const valid = /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(clean) && !clean.includes('..');
+      (valid ? ok : bad).push(d);
+    }
+    $('domainsHint').textContent = `OK: ${ok.length}, BAD: ${bad.length}` + (bad.length ? ` | ${bad.slice(0,6).join(', ')}${bad.length>6?'…':''}` : '');
+  }
+
+  async function createRun(){
+    const domains = $('domains').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    const body = {
+      domains,
+      remote_path_template: $('remoteTpl').value.trim(),
+      ssh_user: $('sshUser').value.trim(),
+      folder_mapping: $('folderMap').value,
+      concurrency: Number($('concurrency').value || 6),
+      dry_run: $('dryRun').value === 'true'
+    };
+
+    try{
+      const req = { method:'POST', path:'/v1/deploy/runs', body };
+      const res = await client().createRun(body);
+      setLast(req,res);
+      currentRunId = res.run_id;
+      setRunHeader(res.status);
+      $('btnRefresh').disabled = false;
+      $('btnDownloadLog').disabled = false;
+      $('btnDownloadLog2').disabled = false;
+      logLine(`Run created: ${currentRunId}`);
+      selectRightTab('runs');
+      await renderRuns();
+      await refreshRun();
+    } catch(e){
+      logLine(`Create run error: ${e.code||''} ${e.message}`);
+    }
+  }
+
+  async function openRun(run_id){
+    currentRunId = run_id;
+    selectRightTab('runs');
+    await refreshRun();
+  }
+
+  async function downloadLog(){
+    if (!currentRunId) return;
+    await refreshLog();
+    downloadText(`deploy_${currentRunId}.log`, $('log').textContent || '');
+  }
+
+  function demoFill(){
+    // Works best in mock mode.
+    $('mode').value = 'mock';
+    setModeUI();
+
+    const st = loadState();
+    if (!st.archives.length){
+      st.archives.push({archive_id: rid('arc'), name:'pack-01.zip', size_kb: 842, created_at: nowISO()});
+      st.archives.push({archive_id: rid('arc'), name:'pack-02.zip', size_kb: 1260, created_at: nowISO()});
+      st.archives.push({archive_id: rid('arc'), name:'pack-03.zip', size_kb: 590, created_at: nowISO()});
+    }
+    if (!st.domains.length){ st.domains = DEFAULT_DOMAINS.slice(); }
+    saveState(st);
+
+    logLine('Demo data created');
+    syncDomainsToUI();
+    renderCatalog();
+    renderRuns();
+  }
+
+  function clearAll(){
+    localStorage.removeItem(LS);
+    currentRunId = null;
+    $('btnRefresh').disabled = true;
+    $('btnDownloadLog').disabled = true;
+    $('btnDownloadLog2').disabled = true;
+    $('runDetails').style.display = 'none';
+    $('archivesList').innerHTML = '';
+    $('runsBody').innerHTML = `<tr><td colspan="5" class="muted">Пока нет запусков.</td></tr>`;
+    $('tasksBody').innerHTML = `<tr><td colspan="5" class="muted">—</td></tr>`;
+    $('log').textContent = '';
+    setRunHeader('—');
+    syncDomainsToUI();
+    renderCatalog();
+    logLine('Cleared');
+  }
+
+  function setAutoRefresh(){
+    if (timer) { clearInterval(timer); timer = null; }
+    if ($('autoRefresh').value !== 'on') return;
+    timer = setInterval(() => { if (currentRunId) refreshRun(); }, 2500);
+  }
+
+  // ======= event wiring =======
+  document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => selectPanel(el.dataset.tab)));
+  document.querySelectorAll('[data-rtab]').forEach(el => el.addEventListener('click', () => selectRightTab(el.dataset.rtab)));
+
+  $('mode').addEventListener('change', async () => { setModeUI(); await syncDomainsToUI(); await renderCatalog(); await renderRuns(); if (currentRunId) await refreshRun(); });
+  $('autoRefresh').addEventListener('change', setAutoRefresh);
+
+  $('btnAddArchive').addEventListener('click', addArchive);
+  $('btnCreateRun').addEventListener('click', createRun);
+  $('btnRefresh').addEventListener('click', refreshRun);
+  $('btnSaveDomains').addEventListener('click', saveDomainsFromMirror);
+  $('btnValidateDomains').addEventListener('click', validateDomains);
+
+  $('btnDownloadLog').addEventListener('click', downloadLog);
+  $('btnDownloadLog2').addEventListener('click', downloadLog);
+  $('btnCopyLog').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('log').textContent || ''); logLine('Log copied'); } catch { logLine('Copy failed (browser permissions)'); }
+  });
+
+  $('btnDemo').addEventListener('click', demoFill);
+  $('btnClear').addEventListener('click', clearAll);
+
+  $('archivesList').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+    if (act === 'delArchive') delArchive(id);
+  });
+
+  $('runsBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.act === 'openRun') openRun(btn.dataset.id);
+  });
+
+  // ======= init =======
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  setModeUI();
+  $('log').textContent = 'Готово. Нажмите «Демо-наполнение» или добавьте архив и запустите run.\n';
+  selectPanel('settings');
+  selectRightTab('catalog');
+  setAutoRefresh();
+
+  // seed UI from mock/real
+  syncDomainsToUI();
+  renderCatalog();
+  renderRuns();
+})();
+</script>
+
+</body>
+</html>

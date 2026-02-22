@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Domain Checker — чистый фронт</title>
+<style>
+  :root{--b:#0f172a;--t:#334155;--g:#64748b;--bd:#e2e8f0;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;--fix:#3b82f6}
+  body{margin:0;background:#f8fafc;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1200px;margin:0 auto;padding:20px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  h2{font-size:16px;margin:0 0 12px;color:var(--b)}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .col{flex:1 1 360px}
+  input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;font:inherit}
+  textarea{min-height:160px;resize:vertical}
+  .btn{padding:10px 14px;border:1px solid var(--bd);border-radius:12px;background:#0f172a;color:#fff;cursor:pointer}
+  .btn.sec{background:#fff;color:var(--t)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .muted{color:var(--g);font-size:12px}
+  .err{color:var(--bad);font-size:13px}
+  table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--bd);border-radius:12px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+  thead th{background:#f1f5f9;color:#334155;font-weight:600;position:sticky;top:0;z-index:1}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid}
+  .ok{color:var(--ok);border-color:#d1fae5;background:#ecfeff}
+  .fix{color:var(--fix);border-color:#dbeafe;background:#eff6ff}
+  .broken{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .dead{color:var(--bad);border-color:#fecaca;background:#fef2f2}
+  .neutral{color:#475569;border-color:#e2e8f0;background:#f8fafc}
+  .topbar{position:sticky;top:0;background:#ffffffcc;backdrop-filter:blur(6px);border-bottom:1px solid var(--bd)}
+  .topbar .wrap{padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+  .logo{display:flex;gap:10px;align-items:center}
+  .logo div{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#ec4899)}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .row-ok{background:#10b98110}.row-dead{background:#ef444410}.row-broken{background:#f59e0b10}.row-fix{background:#3b82f610}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid #cbd5e1;border-top-color:#0f172a;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap">
+    <div class="logo"><div></div><strong>Domain Checker</strong><span class="muted">чистый фронт</span></div>
+    <div id="authState" class="muted">Гость</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Авторизация -->
+  <div id="authCard" class="card" style="max-width:680px">
+    <h2>Авторизация</h2>
+    <div class="muted">Ключ будет передаваться в заголовке <code>X-Auth-Key</code>.</div>
+    <div style="height:8px"></div>
+    <input id="keyInput" placeholder="введите ключ..." />
+    <div id="authError" class="err" style="display:none;margin-top:8px"></div>
+    <div class="toolbar" style="margin-top:12px">
+      <button id="loginBtn" class="btn">Войти</button>
+      <button id="demoBtn" class="btn sec">Вставить демо-ключ</button>
+      <button id="pasteKeyBtn" class="btn sec">Вставить из буфера</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Ключ сохраняется в cookie (30 дней) и localStorage.</div>
+  </div>
+
+  <!-- Приложение -->
+  <div id="app" style="display:none">
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <h2>Чекер доменов</h2>
+          <textarea id="domains" placeholder="domain1.com
+domain2.com, domain3.com"></textarea>
+          <div class="toolbar" style="margin-top:10px">
+            <input type="file" id="fileInput" accept=".txt,.csv">
+            <button id="pasteBtn" class="btn sec">Вставить из буфера</button>
+            <button id="dedupBtn" class="btn sec">Очистить/Дедуп</button>
+          </div>
+
+          <div id="checkError" class="err" style="display:none;margin-top:8px"></div>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="checkBtn" class="btn">Проверить <span id="checkSpin" class="spinner" style="display:none"></span></button>
+            <button id="clearBtn" class="btn sec">Очистить</button>
+            <button id="logoutBtn" class="btn sec">Выйти</button>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <div class="toolbar">
+              <select id="statusFilter">
+                <option value="">Все статусы</option>
+                <option value="ok">ok</option>
+                <option value="domain_dead">domain_dead</option>
+                <option value="domain_broken">domain_broken</option>
+                <option value="domain_fixed">domain_fixed</option>
+                <option value="error_checking">error_checking</option>
+              </select>
+              <input id="searchInput" placeholder="поиск по домену/сообщению" style="max-width:260px">
+              <select id="pageSize"><option>25</option><option selected>50</option><option>100</option></select>
+              <button id="exportCsvBtn" class="btn sec">Экспорт CSV</button>
+              <button id="exportJsonBtn" class="btn sec">Экспорт JSON</button>
+              <button id="copyTableBtn" class="btn sec">Копировать таблицу</button>
+            </div>
+            <div class="muted">Режим: <b id="modeLabel"></b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col" style="flex:2 1 520px">
+        <div class="card">
+          <h2>Результаты</h2>
+          <div id="emptyHint" class="muted">Пока пусто. Запустите проверку.</div>
+          <div id="tableWrap" style="display:none;overflow:auto;margin-top:8px;max-height:60vh">
+            <table id="resultsTable">
+              <thead><tr><th>Домен</th><th>Статус</th><th>Гео</th><th>Сообщение</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="pager" style="display:flex;gap:6px;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Справка по статусам</h2>
+      <ul class="muted">
+        <li><b>ok</b> — домен отвечает корректно</li>
+        <li><b>domain_dead</b> — не резолвится/не отвечает</li>
+        <li><b>domain_broken</b> — живой, но контент/поведение некорректно</li>
+        <li><b>domain_fixed</b> — был сломан, исправлен автоматически</li>
+        <li><b>error_checking</b> — ошибка проверки</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =================== CONFIG =================== */
+// Если у вас есть реальный API с CORS, укажите базовый URL,
+// иначе оставьте пустым — будут использованы моки в браузере.
+const CONFIG = {
+  API_BASE: "", // напр.: "https://api.mydomain.com"
+  MAX_BATCH: 500
+};
+/* ============================================== */
+
+// --- утилиты ---
+const $ = s => document.querySelector(s);
+const getCookie = n => document.cookie.split('; ').find(r=>r.startsWith(n+'='))?.split('=')[1];
+const setCookie = (k,v,days=30)=>{const d=new Date(Date.now()+days*864e5);document.cookie=`${k}=${encodeURIComponent(v)}; expires=${d.toUTCString()}; path=/; SameSite=Lax`;};
+const setAuthState = (authed, key) => {
+  $("#authState").textContent = authed ? "Ключ сохранён" : "Гость";
+  $("#authCard").style.display = authed ? "none" : "block";
+  $("#app").style.display = authed ? "block" : "none";
+  if (!authed) $("#keyInput").value = key || "";
+};
+const showErr = (el, msg) => { el.textContent = msg; el.style.display = msg ? "block" : "none"; };
+const spinner = vis => $("#checkSpin").style.display = vis ? "inline-block" : "none";
+const punycode = s => { try { const u=new URL("http://"+s.replace(/^https?:\/\//i,'')); return u.host; } catch { return s;} };
+function normalizeDomains(text){
+  const raw = text.replace(/\r/g,'\n').split(/[\s,;]+/).map(v=>v.trim()).filter(Boolean);
+  const out = [];
+  for (let s of raw){
+    s = s.replace(/^https?:\/\//i,'').replace(/\/.*$/,'').replace(/:\d+$/,'').toLowerCase();
+    s = punycode(s);
+    if (/[a-z0-9.-]+\.[a-z]{2,}$/i.test(s)) out.push(s);
+  }
+  return Array.from(new Set(out)).slice(0, CONFIG.MAX_BATCH).sort();
+}
+function toCSV(rows){
+  const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const lines = [["domain","status","geo","message"], ...rows.map(r=>[r.domain,r.status,r.geo||"",r.message||""])].map(r=>r.map(esc).join(","));
+  return lines.join("\n");
+}
+function download(filename, content, type){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+// --- моки (если API_BASE пустой) ---
+const mockApi = {
+  async login(key){
+    const ok = /^(?=.{6,})(?!.*(bad|invalid|blocked)).+$/i.test(key);
+    await new Promise(r=>setTimeout(r,300));
+    if (!ok) throw new Error("Неверный ключ или доступ запрещен");
+    return {ok:true};
+  },
+  async check(domains){
+    await new Promise(r=>setTimeout(r,500));
+    const statuses = ['ok','domain_dead','domain_broken','domain_fixed','error_checking'];
+    const geos = ['US','DE','NL','FR','GB','PL','UA','TR','SG','BR'];
+    const msg = {
+      ok:'Домен отвечает штатно',
+      domain_dead:'Хост не пингуется / NXDOMAIN',
+      domain_broken:'Ответ 2xx/3xx есть, но контент некорректен',
+      domain_fixed:'Проблема обнаружена и исправлена автоматически',
+      error_checking:'Внутренняя ошибка проверки (таймаут/SSL)'
+    };
+    const results = domains.map((d,i)=>{
+      const seed = d.length + i*17;
+      const status = statuses[seed % statuses.length];
+      const geo = geos[seed % geos.length];
+      return {domain:d,status,geo,message:msg[status]};
+    });
+    return {results};
+  }
+};
+
+// --- real API wrapper (если указан API_BASE) ---
+async function realLogin(key){
+  const url = CONFIG.API_BASE + "/api/login";
+  const r = await fetch(url,{method:"GET",headers:{"X-Auth-Key":key}});
+  const j = await r.json().catch(()=> ({}));
+  if(!r.ok || j.ok!==true) throw new Error(j.error||"Не удалось залогиниться");
+  return j;
+}
+async function realCheck(domains){
+  const url = CONFIG.API_BASE + "/api/check";
+  const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-Auth-Key":(getCookie("auth_key")||localStorage.getItem("auth_key")||"")},body:JSON.stringify({domains})});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+const api = (!CONFIG.API_BASE) ? mockApi : { login: realLogin, check: realCheck };
+$("#modeLabel").textContent = (!CONFIG.API_BASE) ? "мок (в браузере)" : `реальный API: ${CONFIG.API_BASE}`;
+
+// --- состояние/рендер ---
+let allResults=[], filtered=[], currentPage=1;
+function applyFilters(){
+  const f = ($("#statusFilter").value||"").toLowerCase();
+  const q = ($("#searchInput").value||"").toLowerCase();
+  filtered = allResults.filter(r=>{
+    const okStatus = !f || r.status===f;
+    const hay=(r.domain+" "+(r.message||"")).toLowerCase();
+    const okSearch = !q || hay.includes(q);
+    return okStatus && okSearch;
+  });
+  currentPage=1; renderTable();
+}
+function renderTable(){
+  const tbody=$("#resultsTable tbody"); tbody.innerHTML="";
+  const pageSize=parseInt($("#pageSize").value,10)||50;
+  const total=filtered.length;
+  const pages=Math.max(1,Math.ceil(total/pageSize));
+  currentPage=Math.min(currentPage,pages);
+  const items=filtered.slice((currentPage-1)*pageSize,(currentPage-1)*pageSize+pageSize);
+  for(const r of items){
+    const tr=document.createElement("tr");
+    tr.className = r.status==="ok"?"row-ok": r.status==="domain_dead"?"row-dead": r.status==="domain_broken"?"row-broken": r.status==="domain_fixed"?"row-fix":"";
+    const pillClass = r.status==="ok"?"ok": r.status==="domain_fixed"?"fix": r.status==="domain_broken"?"broken": r.status==="domain_dead"?"dead":"neutral";
+    tr.innerHTML = `<td><strong>${r.domain}</strong></td>
+      <td><span class="pill ${pillClass}">${r.status}</span></td>
+      <td>${r.geo??"—"}</td><td>${r.message??""}</td>`;
+    tbody.appendChild(tr);
+  }
+  $("#emptyHint").style.display = total? "none":"block";
+  $("#tableWrap").style.display = total? "block":"none";
+  const pager=$("#pager"); pager.innerHTML="";
+  if(pages>1){
+    const addBtn=(n,l=n)=>{const b=document.createElement("button");b.textContent=l;b.className=n===currentPage?"btn sec":"";b.onclick=()=>{currentPage=n;renderTable();};pager.appendChild(b);};
+    addBtn(Math.max(1,currentPage-1),"«");
+    for(let i=1;i<=pages && i<=10;i++) addBtn(i);
+    if(pages>10){pager.append(" ... "); addBtn(pages);}
+    addBtn(Math.min(pages,currentPage+1),"»");
+  }
+}
+
+// --- события ---
+$("#loginBtn").addEventListener("click", async ()=>{
+  try{
+    showErr($("#authError"),"");
+    const key = $("#keyInput").value.trim() || (localStorage.getItem("auth_key")||"");
+    if(!key) return showErr($("#authError"),"Введите ключ");
+    const res = await api.login(key);
+    setCookie("auth_key", key); try{localStorage.setItem("auth_key",key);}catch{}
+    setAuthState(true);
+  }catch(e){ showErr($("#authError"), e.message||"Не удалось залогиниться"); }
+});
+$("#demoBtn").addEventListener("click", ()=> $("#keyInput").value="demo_key_123456");
+$("#pasteKeyBtn").addEventListener("click", async ()=>{ try{$("#keyInput").value=(await navigator.clipboard.readText()).trim();}catch{}; });
+
+$("#logoutBtn").addEventListener("click", ()=>{
+  document.cookie="auth_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  try{localStorage.removeItem("auth_key");}catch{}
+  setAuthState(false,""); $("#domains").value=""; allResults=filtered=[]; renderTable();
+});
+$("#pasteBtn").addEventListener("click", async ()=>{ try{$("#domains").value=($("#domains").value+"\n"+(await navigator.clipboard.readText())).trim();}catch{}; });
+$("#dedupBtn").addEventListener("click", ()=> $("#domains").value = normalizeDomains($("#domains").value).join("\n"));
+$("#fileInput").addEventListener("change", async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); const list=normalizeDomains(txt); $("#domains").value=(normalizeDomains($("#domains").value).concat(list)).filter((v,i,a)=>a.indexOf(v)===i).join("\n"); e.target.value=""; });
+$("#statusFilter").addEventListener("change", applyFilters);
+$("#searchInput").addEventListener("input", applyFilters);
+$("#pageSize").addEventListener("change", renderTable);
+$("#exportCsvBtn").addEventListener("click", ()=> filtered.length && download("results.csv", toCSV(filtered), "text/csv;charset=utf-8"));
+$("#exportJsonBtn").addEventListener("click", ()=> filtered.length && download("results.json", JSON.stringify({results:filtered},null,2), "application/json;charset=utf-8"));
+$("#copyTableBtn").addEventListener("click", async ()=>{ const lines=[["domain","status","geo","message"],...filtered.map(r=>[r.domain,r.status,r.geo||"",r.message||""])].map(r=>r.join("\t")).join("\n"); try{await navigator.clipboard.writeText(lines);}catch{}; });
+
+$("#checkBtn").addEventListener("click", async ()=>{
+  try{
+    showErr($("#checkError"),"");
+    let list = normalizeDomains($("#domains").value);
+    if(!list.length) return showErr($("#checkError"), "Введите хотя бы один домен");
+    spinner(true);
+    const data = await api.check(list);
+    allResults = data.results||[]; filtered = allResults.slice(); renderTable();
+  }catch(e){ showErr($("#checkError"), e.message || "Ошибка чека"); }
+  finally{ spinner(false); }
+});
+$("#clearBtn").addEventListener("click", ()=>{ $("#domains").value=""; allResults=filtered=[]; renderTable(); showErr($("#checkError"),""); });
+
+// автологин
+window.addEventListener("DOMContentLoaded", async ()=>{
+  const key = (getCookie("auth_key") && decodeURIComponent(getCookie("auth_key"))) || localStorage.getItem("auth_key") || "";
+  if(key){
+    try{ await api.login(key); setAuthState(true); } catch{ setAuthState(false,""); }
+  } else setAuthState(false,"");
+});
+</script>
+</body>
+</html>
