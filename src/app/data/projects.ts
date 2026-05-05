@@ -175,6 +175,49 @@ export const projects: Project[] = [
   // =========================
   // САЙТЫ
   // =========================
+
+  {
+    id: 'weekend-rout',
+    title: 'Приложение: «Маршрут выходного дня»',
+    description:
+      'Интерактивный гид по маршрутам выходного дня по Москве: карта, карточки локаций, фильтры по интересам и удобные CTA для старта маршрута.',
+    category: 'Pet',
+    stack: 'React, TypeScript, Vite, UI, Maps',
+    tags: ['Pet', 'React', 'Карта', 'Маршруты'],
+    images: ['/assets/projects/weekend-rout-cover.jpg'],
+    demoUrl: 'https://askhalilov.github.io/Weekend-Rout/',
+    githubUrl: 'https://github.com/askhalilov/Weekend-Rout',
+    company: 'personal',
+    year: '2026'
+  },
+  {
+    id: 'kms-medicine',
+    title: 'Сайт: КМС - скорая медицинская помощь',
+    description:
+      'Лендинг для платной скорой помощи в Москве и по России: услуги, преимущества, алгоритм работы, блоки доверия, FAQ и заявки.',
+    category: 'Сайты',
+    stack: 'HTML, CSS, JavaScript, Vercel',
+    tags: ['Сайт', 'Лендинг', 'Vercel', 'Медицина'],
+    images: ['/assets/projects/kms-medicine-cover.jpg'],
+    demoUrl: 'https://kms-medicine.vercel.app/',
+    githubUrl: 'https://github.com/askhalilov/kms-medicine-preview',
+    company: 'КМС Медицина',
+    year: '2026'
+  },
+  {
+    id: 'student-dashboard',
+    title: 'Приложение: «Студенческая доска объявлений»',
+    description:
+      'Доска объявлений для студентов: категории, свежие объявления, избранное, профиль и мягкий notebook-style UI.',
+    category: 'Pet',
+    stack: 'HTML, CSS, JavaScript, GitHub Pages',
+    tags: ['Pet', 'Доска', 'Студенты', 'UI'],
+    images: ['/assets/projects/student-dashboard-cover.jpg'],
+    demoUrl: 'https://askhalilov.github.io/dashboard/',
+    githubUrl: 'https://github.com/askhalilov/dashboard',
+    company: 'personal',
+    year: '2026'
+  },
   {
     id: 'site-perspektiva',
     title: 'Сайт: ООО «ПерспективаТЦ»',
